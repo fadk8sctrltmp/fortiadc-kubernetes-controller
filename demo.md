@@ -103,12 +103,12 @@ flowchart LR
       vxroute["Calico VXLAN Routing"]
     end
 
-
+   
     client["psql client"] --> l4vs
     l4vs == "VXLAN Tunnel<br>Encapsulated TCP Payload<br>VTEP: 172.23.133.171" ==> vxroute
     vxroute == "Decapsulate to Pod IP<br>VTEP: 172.23.133.48" ==> pgsvc
 
-
+    
     linkStyle 2 stroke:#ff0000,stroke-width:3px,stroke-dasharray: 5 5,fill:none
     linkStyle 3 stroke:#ff0000,stroke-width:3px,stroke-dasharray: 5 5,fill:none
   end
@@ -131,7 +131,7 @@ Please contact your SE to obtain the FortiADC 8.0.2 interim build that includes 
 
 #### Download the calico fake node file
 
-        curl -k https://raw.githubusercontent.com/fadk8sctrltmp/fortiadc-kubernetes-controller/refs/heads/main/node_examples/calico_fake_fadc_node.yaml -o calico_fake_fadc_node.yaml
+	curl -k https://raw.githubusercontent.com/fadk8sctrltmp/fortiadc-kubernetes-controller/refs/heads/main/node_examples/calico_fake_fadc_node.yaml -o calico_fake_fadc_node.yaml
 
 The fake node configuration also with fake ipamhandle, ipamblock and BlockAffinity configuraion
 These are the network configuration Calico needed for a new node, the node IP address and subnet should be the same in all of these config.
@@ -183,7 +183,7 @@ metadata:
     # IPv4VXLANTunnelAddr
     name: 10-1-187-192-26
 spec:
-    # IPv4VXLANTunnelAddr
+    # IPv4VXLANTunnelAddr 
     cidr: 10.1.187.192/26
     affinity: host:fadc-fake-node
 ```
@@ -198,7 +198,7 @@ metadata:
 spec:
     handleID: vxlan-tunnel-addr-fadc-fake-node
     block:
-        # IPv4VXLANTunnelAddr
+        # IPv4VXLANTunnelAddr 
         10.1.187.192/26: 1
 
 ```
@@ -206,14 +206,14 @@ spec:
 
 #### Apply the Calico fake node to Kubernetes cluster
 
-        kubectl apply -f calico_fake_fadc_node.yaml
+	kubectl apply -f calico_fake_fadc_node.yaml
 
 ### Check calico vxlan vni and port
 
 #### Use kubectl command to check calico vxlan vni and port
 
 
-        kubectl get felixconfiguration default -o yaml
+	kubectl get felixconfiguration default -o yaml
 
 
 Without specific configuration in felixconfiguraion, the default Calico VxLAN VNI is 4096, and the VxLAN port is UDP port 4789.
@@ -221,7 +221,7 @@ The default value may not show in felixconfiguraion.
 
 #### The other way is to check vxlan.calico interface
 
-        ip -d link show vxlan.calico
+	ip -d link show vxlan.calico
 
 
 Calico will create a vxlan.calico interface on each node, you can also directly check the vxlan settings in this interface.
@@ -233,7 +233,7 @@ Calico will create a vxlan.calico interface on each node, you can also directly 
 Calico will assign a MAC address for the FortiADC fake node,  found the address in ARP table of master node.
 
 
-        ip neigh show | grep PERMANENT
+	ip neigh show | grep PERMANENT
 
 
 We assign an IP address for FortiADC in the fake node, and the MAC address is assigned by Calico.
@@ -250,19 +250,19 @@ The following is a sample of FortiADC configuration
 The MAC address that Calico assign for fake node need to configure to FortiADC to vxlan-interface-mac
 
 
-        config system overlay-tunnel
-                edit "k8s_calico"
-                        set vxlan-type calico_vxlan
-                        set interface port1
-                        set destination-ip-addresses 172.23.133.48
-                        set vxlan-interface-mac 66:18:7a:f4:7b:9e
-                        set vni 4096
-                        config  remote-host
-                        end
-                        config  arp
-                        end
-                next
-        end
+	config system overlay-tunnel
+		edit "k8s_calico"
+			set vxlan-type calico_vxlan
+			set interface port1
+			set destination-ip-addresses 172.23.133.48
+			set vxlan-interface-mac 66:18:7a:f4:7b:9e
+			set vni 4096
+			config  remote-host
+			end
+			config  arp
+			end
+		next
+	end
 
 
 Note that the overlay-tunnel name should be set in annotation "overlay-tunnel" when apply Service to Kubernetes cluster.
@@ -276,19 +276,19 @@ Also allow ping/http/https traffic to go through the interface
 
 Here we set the overlay tunnel interface to be 10.1.187.192/16
 
-        config system interface
-                edit "k8s_calico"
-                        set type vxlan
-                        set vxlan-type calico_vxlan
-                        set vdom root
-                        set ip 10.1.187.192/16
-                        set allowaccess https ping http
-                        set mtu 1450
-                        set mac addr 66:18:7a:f4:7b:9e
-                        config  ha-node-ip-list
-                        end
-                next
-        end
+	config system interface
+		edit "k8s_calico"
+			set type vxlan
+			set vxlan-type calico_vxlan
+			set vdom root
+			set ip 10.1.187.192/16
+			set allowaccess https ping http
+			set mtu 1450
+			set mac addr 66:18:7a:f4:7b:9e
+			config  ha-node-ip-list
+			end
+		next
+	end
 
 
 
